@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15.6  # PostgreSQLのイメージに変更
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata2:/var/lib/postgresql/data  # PostgreSQLのデータディレクトリに変更
+    ports:
+      - '6543:5432'  # PostgreSQLのデフォルトポートに変更
+
+  api:
+    build:
+      context: ./backend  # backendフォルダがビルドコンテキスト
+    command: bash -c "rm -f tmp/pids/server.pid && bundle check || bundle install && rails s -p 3000 -b '0.0.0.0'"
+    volumes:
+      - ./backend:/api2  # backendフォルダをコンテナの/apiディレクトリにマウント
+    ports:
+      - '3333:3000'  # ホストのポート3003をコンテナのポート3000にマッピング
+    stdin_open: true
+    tty: true
+    depends_on:
+      - db
+
+  front:
+    build: ./frontend/
+    volumes:
+      - ./frontend:/front2
+    ports:
+      - 8888:3000
+    tty: true
+    stdin_open: true
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    command: "npm run dev"
+
+volumes:
+  pgdata2:
